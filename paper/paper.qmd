@@ -8,7 +8,9 @@ thanks: "Code and data are available at: LINK."
 date: today
 date-format: long
 abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
-format: pdf
+format: 
+  pdf: 
+    fig-pos: 'H'
 number-sections: true
 bibliography: references.bib
 ---
@@ -18,12 +20,15 @@ bibliography: references.bib
 #| warning: false
 #| message: false
 
-library(here)
 library(tidyverse)
+library(arrow)
+library(here)
+library(knitr)
 library(modelsummary)
 library(marginaleffects)
 
-political_preferences <- readRDS(here("models/winrates.rds"))
+data <- read_parquet(here("data/analysis_data/analysis_data.parquet"))
+winrates <- readRDS(here("models/winrates.rds"))
 ```
 
 
@@ -39,19 +44,145 @@ Sports and other physical activities such as horse racing have been the primary 
 esports markets are being offered by many major bookmakers such as Pinnacle and Bet365. Since esports are new compared to traditional sports, 
 there is relatively little research and the models are of lower quality. 
 
-This paper aims to help close the gap by modelling the effects of various individual statistics such as kill/death ratios on the overall team win rate
-in the `CS (Counter-Strike)` series. 
-We found
+*CS (Counter-Strike)* is a 5v5 competitive multiplayer game where one team defends a bombsite while the other attempts to plant and detonate a bomb.
+Professional *CS* teams compete in tournaments where teams play each other, where the number of maps won determine the winner of the matchup.
+In this paper, we created a model predict the estimand, map win rate, using various individual statistics such as K/D (kill/death ratio), ADR (average damage per round), and the total number of rounds played.
+
+We found that some metrics such as individual kill/death ratios have a significant positive correlation with win rates while other metrics such as the total number of rounds played has no correlation with win rate.
 
 The data section (@sec-data) explains how the source of the data, how it was collected, how it was cleaned and analyzed, and visualizations of the data. 
 The model section (@sec-model) explains the model used to fit the dataset.
 The results section (@sec-results) explains the results of the analysis with visualizations.
 
 # Data {#sec-data}
-The data used in this paper was provided by HLTV.org, a website that provides `CS` news, information about tournaments, past matches, and player statistics.
-Player statistics and match data were scraped from HLTV.org using Python and the `selenium` and `BeautifulSoup` libraries. The win/loss data used is from all matches played between October 16, 2023 and April 1, 2024 in `CS:2 (Counter-Strike: 2)` tournaments with prize pools of at least $250,000. The player data used are lifetime statistics and include matches played in both `CS:GO (Counter-Strike: Global Offensive)` and `CS:2`. The lifetime statistics also include data from matches not used in the win/loss data.
+The data used in this paper was provided by HLTV.org, a website that provides *CS* news, information about tournaments, past matches, and player statistics.
+Existing datasets for this information are rare and their measurement criteria are not clear, so the dataset used for this paper was constructed.
+Player statistics and match data were scraped from HLTV.org using Python [@python] and the `selenium` [@Selenium] and `BeautifulSoup` [@bs4] libraries.
 
-The raw data was then cleaned and 
+The win/loss data used is from all matches played between October 16, 2023 and April 17, 2024 in *CS:2 (Counter-Strike: 2)* tournaments with prize pools of at least $100,000. The player data used are lifetime statistics and include matches played in both *CS:GO (Counter-Strike: Global Offensive)* and *CS:2*. The lifetime statistics also include data from matches not used in the win/loss data.
+
+The raw data was then cleaned and analyzed using statistical programming language R [@r] and the `tidyverse` [@tidyverse], `janitor` [@janitor], `arrow` [@arrow], `stanarm` [@rstanarm], `knitr` [@knitr], `modelsummary` [@modelsummary], `marginaleffects` [@marginaleffects], and `here` [@here] libraries.
+
+The final dataset consists of 445 players with a cumulative 9855 maps played across 22 tournaments. For each player, the dataset contains the number of tournament maps won and lost. A map is won if their team wins 13 of the first 24 rounds or if they win 4 out of 6 rounds in overtime.
+The dataset also contains the number of kills, deaths, headshot percentage, ADR, and the total number of rounds played. These statistics are measured over 
+the player's professional career. Headshot percentage is measured as the proportion of kills where the killing blow is a headshot and ADR is measured as the total damage done to
+enemies divided by the number of rounds played.
+
+@fig-maps shows the distribution of the number of tournament maps played while @fig-maps-wl-1 and @fig-maps-wl-2 show the distributions of the number of wins and losses respectively.
+The median number of maps played is 12 and teams typically play a minimum of 4 maps per tournament (2 best of 1s and a best of 3 elimination match),
+indicating most players have short tournament runs or are not invited. This can also be seen in @fig-maps-wl-2 where the most common number of maps won are 0 to 1,
+indicating those players have been knocked out early in every tournament they played.
+```{r}
+#| label: fig-maps
+#| fig-cap: Number of tournament maps played with median
+#| echo: false
+data |> 
+  ggplot(aes(x = games_played)) +
+  geom_histogram(binwidth = 2) +
+  labs(x = "Number of Tournament Maps Played", y = "Number of Players") +
+  theme_classic() +
+  geom_vline(aes(xintercept = median(games_played)),
+            color = "black",
+            linetype = "dashed",
+            linewidth = 1)
+```
+```{r}
+#| layout-ncol: 2
+#| label: fig-maps-wl
+#| fig-cap: 
+#|  - Number of tournament maps won
+#|  - Number of tournament maps lost
+#| echo: false
+data |> 
+  ggplot(aes(x = win)) +
+  geom_histogram(binwidth = 2) +
+  labs(x = "Number of Tournament Maps Won", y = "Number of Players") +
+  theme_classic()
+
+data |> 
+  ggplot(aes(x = loss)) +
+  geom_histogram(binwidth = 2) +
+  labs(x = "Number of Tournament Maps Lost", y = "Number of Players") +
+  theme_classic()
+```
+
+@fig-kdr shows the distribution of Kill/Death ratios. The median is slightly above the average of 1.0, 
+indicating players in tournaments with significant prize pools are better than the average professional player, as expected. @fig-kd-1 and @fig-kd-2 shows the distributions of lifetime kills and deaths respectively.
+```{r}
+#| label: fig-kdr
+#| fig-cap: Kill/Death ratios with median
+#| echo: false
+data |> 
+  ggplot(aes(x = kill_death_ratio)) +
+  geom_histogram(binwidth = 0.02) +
+  labs(x = "Kill/Death Ratio", y = "Number of Players") +
+  theme_classic() +
+  geom_vline(aes(xintercept = median(kill_death_ratio)),
+            color = "black",
+            linetype = "dashed",
+            linewidth = 1)
+```
+
+```{r}
+#| layout-ncol: 2
+#| label: fig-kd
+#| fig-cap: 
+#|  - Number of kills
+#|  - Number of deaths
+#| echo: false
+data |> 
+  ggplot(aes(x = kills)) +
+  geom_histogram(binwidth = 1000) +
+  labs(x = "Kills", y = "Number of Players") +
+  theme_classic()
+
+data |> 
+  ggplot(aes(x = deaths)) +
+  geom_histogram(binwidth = 1000) +
+  labs(x = "Deaths", y = "Number of Players") +
+  theme_classic()
+```
+
+@fig-adr shows the distribution of ADR. Each player has 100 health
+and on average, less than 5 enemies will be killed each round, so we expect the ADR to be less than 100. 
+
+[^1]: An AWP is a powerful but expensive sniper rifle, capable of killing in one shot to the chest
+```{r}
+#| label: fig-adr
+#| fig-cap: Distribution of ADR
+#|  - Distribution of Headshot Percentage
+#|  - Number of rounds played
+#| echo: false
+data |> 
+  ggplot(aes(x = adr)) +
+  geom_histogram(binwidth = 1) +
+  labs(x = "ADR", y = "Number of Players") +
+  theme_classic()
+```
+@fig-hs shows the distribution of headshot percentages. A professional *CS* team typically has 4 riflers and 1 AWPer[^1], where riflers aim for the head to do more damage while AWPers are more likely to aim for the chest since it is a larger area and they will kill in a single shot regardless. This could explain why the players are distributed with a left skew.
+```{r}
+#| label: fig-hs
+#| fig-cap: Distribution of Headshot Percentage
+#|  - Number of rounds played
+#| echo: false
+data |> 
+  ggplot(aes(x = hs)) +
+  geom_histogram(binwidth = 1) +
+  labs(x = "Headshot %", y = "Number of Players") +
+  theme_classic()
+```
+@fig-rounds shows the total number of rounds played.
+```{r}
+#| label: fig-rounds
+#| fig-cap: Distribution of Headshot Percentage
+#|  - Number of rounds played
+#| echo: false
+data |> 
+  ggplot(aes(x = rounds)) +
+  geom_histogram(binwidth = 1000) +
+  labs(x = "Rounds Played", y = "Number of Players") +
+  theme_classic()
+```
 
 # Model
 
@@ -102,7 +233,7 @@ modelsummary(
 #| fig-cap: aaa
 #| echo: false
 
-  ggplot(data, aes(x = adr, y = win_percent)) +
+  ggplot(data, aes(x = rounds, y = win_percent)) +
   ylim(0, 1) +
   geom_jitter(width = 0.00, height = 0.00, alpha = 1) +
   labs(
@@ -141,55 +272,9 @@ Weaknesses and next steps should also be included.
 
 ## Posterior predictive check
 
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
-
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
-
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
-```
 
 ## Diagnostics
 
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
-
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
-
-```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
-
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
-```
-
-
-
-\newpage
 
 
 # References
