@@ -150,8 +150,6 @@ and on average, less than 5 enemies will be killed each round, so we expect the 
 ```{r}
 #| label: fig-adr
 #| fig-cap: Distribution of ADR
-#|  - Distribution of Headshot Percentage
-#|  - Number of rounds played
 #| echo: false
 data |> 
   ggplot(aes(x = adr)) +
@@ -159,11 +157,11 @@ data |>
   labs(x = "ADR", y = "Number of Players") +
   theme_classic()
 ```
+
 @fig-hs shows the distribution of headshot percentages. A professional *CS* team typically has 4 riflers and 1 AWPer[^1], where riflers aim for the head to do more damage while AWPers are more likely to aim for the chest since it is a larger area and they will kill in a single shot regardless. This could explain why the players are distributed with a left skew.
 ```{r}
 #| label: fig-hs
 #| fig-cap: Distribution of Headshot Percentage
-#|  - Number of rounds played
 #| echo: false
 data |> 
   ggplot(aes(x = hs)) +
@@ -174,8 +172,7 @@ data |>
 @fig-rounds shows the total number of rounds played.
 ```{r}
 #| label: fig-rounds
-#| fig-cap: Distribution of Headshot Percentage
-#|  - Number of rounds played
+#| fig-cap: Number of rounds played
 #| echo: false
 data |> 
   ggplot(aes(x = rounds)) +
