@@ -1,44 +1,31 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Cleans and adds additional features to data.
+# Author: Shuyang Qiu
+# Date: 17 April 2024
+# Contact: shuyang.qiu@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: None
 
 #### Workspace setup ####
 library(tidyverse)
+library(arrow)
 
 #### Clean data ####
-raw_data <- read_csv("inputs/data/plane_data.csv")
+raw_data <-
+  read_csv(
+    "./data/raw_data/raw_data.csv",
+    col_names = c("name", "win", "loss", "kills", "deaths", "hs", "adr", "rounds")
+  )
 
 cleaned_data <-
-  raw_data |>
-  janitor::clean_names() |>
-  select(wing_width_mm, wing_length_mm, flying_time_sec_first_timer) |>
-  filter(wing_width_mm != "caw") |>
-  mutate(
-    flying_time_sec_first_timer = if_else(flying_time_sec_first_timer == "1,35",
-                                   "1.35",
-                                   flying_time_sec_first_timer)
-  ) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "490",
-                                 "49",
-                                 wing_width_mm)) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "6",
-                                 "60",
-                                 wing_width_mm)) |>
-  mutate(
-    wing_width_mm = as.numeric(wing_width_mm),
-    wing_length_mm = as.numeric(wing_length_mm),
-    flying_time_sec_first_timer = as.numeric(flying_time_sec_first_timer)
-  ) |>
-  rename(flying_time = flying_time_sec_first_timer,
-         width = wing_width_mm,
-         length = wing_length_mm
-         ) |> 
-  tidyr::drop_na()
+  raw_data |> 
+  separate("name", into = c("id", "name"), sep = "/") |> # Split name column
+  mutate(hs = as.numeric(gsub("%", "", hs))) # Remove % sign from headshot column
+
+# Add additional columns
+cleaned_data$games_played <- cleaned_data$win + cleaned_data$loss
+cleaned_data$win_percent <- cleaned_data$win / cleaned_data$games_played
+cleaned_data$kill_death_ratio <- cleaned_data$kills / cleaned_data$deaths
 
 #### Save data ####
-write_csv(cleaned_data, "outputs/data/analysis_data.csv")
+write_parquet(cleaned_data, "./data/analysis_data/analysis_data.parquet")
