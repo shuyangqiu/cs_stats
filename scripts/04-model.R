@@ -1,37 +1,33 @@
 #### Preamble ####
-# Purpose: Models... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 11 February 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Generates model for win percentage base on various summary statistics.
+# Author: Shuyang Qiu
+# Date: 17 April 2024
+# Contact: shuyang.qiu@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: None
 
 
 #### Workspace setup ####
-library(tidyverse)
+library(arrow)
 library(rstanarm)
 
-#### Read data ####
-analysis_data <- read_csv("data/analysis_data/analysis_data.csv")
+
+data <- read_parquet("./data/analysis_data/analysis_data.parquet")
+seed <- 111
 
 ### Model data ####
-first_model <-
+winrates <-
   stan_glm(
-    formula = flying_time ~ length + width,
-    data = analysis_data,
-    family = gaussian(),
-    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_aux = exponential(rate = 1, autoscale = TRUE),
-    seed = 853
+    win_percent ~ kill_death_ratio + hs + adr + rounds,
+    data = data,
+    family = binomial(link = "logit"),
+    weights = games_played,
+    seed = seed
   )
 
 
 #### Save model ####
 saveRDS(
-  first_model,
-  file = "models/first_model.rds"
+  winrates,
+  file = "./models/winrates.rds"
 )
-
-
