@@ -18,61 +18,40 @@ bibliography: references.bib
 #| warning: false
 #| message: false
 
+library(here)
 library(tidyverse)
-library(palmerpenguins)
+library(modelsummary)
+library(marginaleffects)
+
+political_preferences <- readRDS(here("models/winrates.rds"))
 ```
 
 
 # Introduction
 
-You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
+Modelling and predicting results of competitive sports is a potentially lucrative endeavor and can help provide
+insights for competitors, team managers, coaches, and others. Sports betting is a multi-billion dollar industry employing
+hundreds of data analysts to create better models and increase market efficiency. On the other hand, sharp bettors are creating their
+own models to beat the odds and make fortunes. Meanwhile, teams and coaches can use models to create better rosters and find
+the optimal training for their players.
 
-The remainder of this paper is structured as follows. @sec-data....
+Sports and other physical activities such as horse racing have been the primary focus of bookmakers but esports betting is becoming more popular and 
+esports markets are being offered by many major bookmakers such as Pinnacle and Bet365. Since esports are new compared to traditional sports, 
+there is relatively little research and the models are of lower quality. 
 
+This paper aims to help close the gap by modelling the effects of various individual statistics such as kill/death ratios on the overall team win rate
+in the `CS (Counter-Strike)` series. 
+We found
 
+The data section (@sec-data) explains how the source of the data, how it was collected, how it was cleaned and analyzed, and visualizations of the data. 
+The model section (@sec-model) explains the model used to fit the dataset.
+The results section (@sec-results) explains the results of the analysis with visualizations.
 
 # Data {#sec-data}
+The data used in this paper was provided by HLTV.org, a website that provides `CS` news, information about tournaments, past matches, and player statistics.
+Player statistics and match data were scraped from HLTV.org using Python and the `selenium` and `BeautifulSoup` libraries. The win/loss data used is from all matches played between October 16, 2023 and April 1, 2024 in `CS:2 (Counter-Strike: 2)` tournaments with prize pools of at least $250,000. The player data used are lifetime statistics and include matches played in both `CS:GO (Counter-Strike: Global Offensive)` and `CS:2`. The lifetime statistics also include data from matches not used in the win/loss data.
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
-
-```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
-
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
-  theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
-
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
-#| echo: false
-#| warning: false
-#| message: false
-
-analysis_data <- read_csv(here::here("data/analysis_data/analysis_data.csv"))
-
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
-  theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
-```
-
-Talk way more about it. 
-
-
+The raw data was then cleaned and 
 
 # Model
 
@@ -105,38 +84,35 @@ We can use maths by including latex between dollar signs, for instance $\theta$.
 
 # Results
 
-Our results are summarized in @tbl-modelresults.
-
 ```{r}
+#| label: tbl-model
+#| tbl-cap: Whether a respondent is likely to vote for Biden based on their race and education
 #| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-library(rstanarm)
-
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
 #| warning: false
 
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
+modelsummary(
+  list("Tournament Win Rate" = winrates),
   statistic = "mad",
-  fmt = 2
-)
+  )
 ```
 
 
+```{r}
+#| label: fig-vote-education
+#| fig-cap: aaa
+#| echo: false
 
+  ggplot(data, aes(x = adr, y = win_percent)) +
+  ylim(0, 1) +
+  geom_jitter(width = 0.00, height = 0.00, alpha = 1) +
+  labs(
+    x = "Kill/Death ratio",
+    y = "Estimated tournament win rate"
+  ) +
+  theme_classic() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
 
 # Discussion
 
