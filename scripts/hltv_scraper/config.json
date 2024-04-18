@@ -1,0 +1,12 @@
+{
+    "BASE": "https://www.hltv.org",
+    "ARCHIVE": "events/archive",
+    "EVENTS": "events",
+    "PLAYER": "stats/players",
+    "RESULTS": "results",
+    "MATCH": "matches",
+    "DELAY": 5,
+    "HEADERS": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    }
+}
