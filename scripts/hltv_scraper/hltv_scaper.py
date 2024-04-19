@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 from time import sleep
 
 class Player:
+    '''A data structure representing a CS player.
+    '''
     path: str
     win = -1
     loss = -1
@@ -25,6 +27,8 @@ class Player:
         return f"{self.path}, {self.win}, {self.loss}, {self.kills}, {self.deaths}, {self.headshot}, {self.adr}, {self.rounds}"
 
 class HLTVScraper:
+    '''A class containing methods to scrape HLTV.org.
+    '''
     _config: Dict[str, Any]
     _browser: Chrome
 
@@ -53,7 +57,7 @@ class HLTVScraper:
         
 
     def get_events(self, startDate: str, endDate: str, prizePool: int) -> List[str]:
-        """Returns a list of event ids within a date range and with the correct type.
+        """Returns a list of event ids within a date range with at least the specified prize pool.
         """
         params = {"startDate": startDate, "endDate": endDate, "prizeMin": prizePool, "prizeMax": 2000000}
         html = self.__get_html(self._config["ARCHIVE"], params)
@@ -113,6 +117,8 @@ class HLTVScraper:
         return results
 
     def get_players_in_event(self, eventId: str) -> Dict[str, Player]:
+        '''Returns a list of players in an event with their win/loss records.
+        '''
         matches = self.get_event_matches(eventId)
 
         players = {}
@@ -127,6 +133,8 @@ class HLTVScraper:
         return players
 
     def get_player_stats(self, player: Player) -> None:
+        '''Scrapes and sets a player's stats.
+        '''
         html = self.__get_html(f"{self._config['PLAYER']}/{player.path}")
         soup = BeautifulSoup(html, "html.parser")
 
@@ -140,4 +148,6 @@ class HLTVScraper:
 
 
     def close(self) -> None:
+        '''Closes the webdriver.
+        '''
         self._browser.close()

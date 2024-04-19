@@ -11,12 +11,14 @@ library(tidyverse)
 library(arrow)
 
 #### Clean data ####
+# Read data
 raw_data <-
   read_csv(
     "./data/raw_data/raw_data.csv",
     col_names = c("name", "win", "loss", "kills", "deaths", "hs", "adr", "rounds")
   )
 
+# Clean data
 cleaned_data <-
   raw_data |> 
   separate("name", into = c("id", "name"), sep = "/") |> # Split name column
