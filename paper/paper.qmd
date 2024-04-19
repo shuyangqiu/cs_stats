@@ -1,13 +1,12 @@
 ---
-title: "My title"
-subtitle: "My subtitle if needed"
-author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
+title: "Predicting Counter-Strike Win Rates Using Player Statistics"
+author: "Shuyang Qiu"
+thanks: "Code and data are available at: https://github.com/shuyangqiu/cs_stats."
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "Counter-Strike player statistics were used to create a model to predict their team's win rate. Predictors used include player performance metrics such as
+  average damage per round and overall statistics such as total number of rounds played. We found some average damage per round is negatively correlated with win rates
+  while other metrics were positively correlated. This model could be improved on to allow bookmakers to create more efficient markets, or allow coaches to make better roster decisions."
 format: 
   pdf: 
     fig-pos: 'H'
@@ -107,6 +106,7 @@ data |>
   theme_classic()
 ```
 
+\newpage
 @fig-kdr shows the distribution of Kill/Death ratios. The median is slightly above the average of 1.0, 
 indicating players in tournaments with significant prize pools are better than the average professional player, as expected. @fig-kd-1 and @fig-kd-2 shows the distributions of lifetime kills and deaths respectively.
 ```{r}
@@ -148,7 +148,7 @@ data |>
 and on average, less than 5 enemies will be killed each round, so we expect the ADR to be less than 100. 
 
 
-```{r}
+```{r, out.height = "75%", out.width = "75%"}
 #| label: fig-adr
 #| fig-cap: Distribution of ADR
 #| echo: false
@@ -160,8 +160,9 @@ data |>
 ```
 
 @fig-hs shows the distribution of headshot percentages. A professional *CS* team typically has 4 riflers and 1 AWPer[^1], where riflers aim for the head to do more damage while AWPers are more likely to aim for the chest since it is a larger area and they will kill in a single shot regardless. This could explain why the players are distributed with a left skew.
+
 [^1]: An AWP is a powerful but expensive sniper rifle, capable of killing in one shot to the chest
-```{r}
+```{r, out.height = "75%", out.width = "75%"}
 #| label: fig-hs
 #| fig-cap: Distribution of Headshot Percentage
 #| echo: false
@@ -172,7 +173,7 @@ data |>
   theme_classic()
 ```
 @fig-rounds shows the total number of rounds played.
-```{r}
+```{r, out.height = "75%", out.width = "75%"}
 #| label: fig-rounds
 #| fig-cap: Number of rounds played
 #| echo: false
@@ -220,6 +221,7 @@ The number of rounds played can be used to determine the experience of a player,
 Additionally, better players should play in the professional scene more, so they should have more rounds played in total.
 Given these factors, we expect the number of rounds played to be positively correlated with win rates.
 
+\newpage
 # Results {#sec-results}
 @fig-kdr-wr shows the relationship between K/D and map win rates with a line provided by the linear regression model.
 The overall relationships in this figure and following figures are difficult to see using only data points due to the number and distribution.
@@ -234,7 +236,7 @@ plot_predictions(winrates, condition = "kill_death_ratio") +
   labs(x = "Kill/Death Ratio", y = "Win Rate") +
   theme_classic()
 ```
-
+\newpage
 @fig-hs-wr shows the relationship between HS% and map win rates with a line provided by the linear regression model.
 The regression line suggests there is a positive correlation between HS% and win rate, as expected when constructing the model.
 ```{r}
@@ -246,6 +248,7 @@ plot_predictions(winrates, condition = "hs") +
   labs(x = "Headshot Percentage", y = "Win Rate") +
   theme_classic()
 ```
+\newpage
 @fig-adr-wr shows the relationship between ADR and map win rates with a line provided by the linear regression model.
 Interestingly, the regression line suggests there is a negative correlation between ADR and win rate.
 This appears to be counterintuitive since more damage is generally good. An explanation for this could be 
@@ -261,6 +264,7 @@ plot_predictions(winrates, condition = "adr") +
   labs(x = "Average Damage per Round", y = "Win Rate") +
   theme_classic()
 ```
+\newpage
 @fig-rounds-wr shows the relationship between total number of rounds played and map win rates with a line provided by the linear regression model.
 The regression line suggests there is a positive relationship between total rounds played and win rate, as expected when constructing the model.
 ```{r}
@@ -287,7 +291,8 @@ modelsummary(
   fmt = 6
   )
 ```
-
+\newpage
+\newpage
 # Discussion{#sec-discussion}
 
 ## Impacts of an individual on team performance {#sec-discussion-1}
