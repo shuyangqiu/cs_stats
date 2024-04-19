@@ -331,6 +331,11 @@ outdated, but are still included. Many players have been playing for years and t
 no longer be relevant due changes to the game itself or age and declining physical abilities. The model could likely be improved by
 limiting the lifetime statistics to more recent ones. 
 
+One minor flaw in the data is the total number of losses is one less than the number of wins when they should be equal. This could
+be caused by an error in the data collection or an error by HLTV.org. It is not possible to determine the cause without rescraping all the data,
+which takes a long time. This error likely makes very little difference in the results and can probably be ignored. Improvements can be made in the future to
+the scraper so it detects these types of errors during runtime instead of after all the data has been collected.
+
 Finally, the current model uses only 4 predictors. Many other statistics could be added such as number of opening kills (first kill of the round) and opening deaths.
 As stated in @sec-data for the explanation of @fig-hs, the HS% could be dependent on the weapons used, so weapons used could be included as an interaction variable.
 
