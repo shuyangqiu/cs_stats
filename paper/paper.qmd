@@ -50,9 +50,10 @@ In this paper, we created a model predict the estimand, map win rate, using vari
 
 We found that some metrics such as K/D have a positive correlation with win rates while other metrics such ADR have negative correlations with win rate.
 
-The data section (@sec-data) explains how the source of the data, how it was collected, how it was cleaned and analyzed, and visualizations of the data. 
-The model section (@sec-model) explains the model used to fit the dataset.
-The results section (@sec-results) explains the results of the analysis with visualizations.
+@sec-data explains the source of the data, how it was collected, how it was cleaned and analyzed, and visualizations of the data. 
+@sec-model presents the model used to fit the dataset, the predictors used, and a justification for the model.
+@sec-results explains the results of the analysis with visualizations.
+@sec-discussion provides discussion on the results of this paper as well as weaknesses and next steps.
 
 # Data {#sec-data}
 The data used in this paper was provided by HLTV.org [@hltv], a website that provides *CS* news, information about tournaments, past matches, and player statistics.
@@ -181,7 +182,7 @@ data |>
   theme_classic()
 ```
 
-# Model
+# Model {#sec-model}
 ## Model set-up
 
 The regression model used was:
@@ -199,7 +200,7 @@ where $y_i$ is 1 if player $i$ will win a map and 0 if they will lose.
 $\mbox{K/D}_i$ is the kill/death ratio of the player, $\mbox{ADR}_i$ is the 
 player's ADR, $\mbox{HS \%}$ is the player's headshot percentage, and $\mbox{Rounds played}_i$ is the total number of rounds played by player $i$.
 
-### Model justification
+## Model justification
 
 The outcome of any map played is binary, so a logistic regression model was chosen. 
 
@@ -218,7 +219,7 @@ The number of rounds played can be used to determine the experience of a player,
 Additionally, better players should play in the professional scene more, so they should have more rounds played in total.
 Given these factors, we expect the number of rounds played to be positively correlated with win rates.
 
-# Results
+# Results {#sec-results}
 @fig-kdr-wr shows the relationship between K/D and map win rates with a line provided by the linear regression model.
 The overall relationships in this figure and following figures are difficult to see using only data points due to the number and distribution.
 However, the regression line suggests there is a positive correlation between K/D and win rate, as expected when constructing the model.
@@ -286,15 +287,10 @@ modelsummary(
   )
 ```
 
-# Discussion
+# Discussion{#sec-discussion}
 
-## First discussion point {#sec-first-point}
+## Impacts of an individual on team performance
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
-
-## Second discussion point
-
-## Third discussion point
 
 ## Weaknesses and next steps
 
