@@ -55,7 +55,7 @@ The model section (@sec-model) explains the model used to fit the dataset.
 The results section (@sec-results) explains the results of the analysis with visualizations.
 
 # Data {#sec-data}
-The data used in this paper was provided by HLTV.org, a website that provides *CS* news, information about tournaments, past matches, and player statistics.
+The data used in this paper was provided by HLTV.org [@hltv], a website that provides *CS* news, information about tournaments, past matches, and player statistics.
 Existing datasets for this information are rare and their measurement criteria are not clear, so the dataset used for this paper was constructed.
 Player statistics and match data were scraped from HLTV.org using Python [@python] and the `selenium` [@Selenium] and `BeautifulSoup` [@bs4] libraries.
 
@@ -64,8 +64,8 @@ The win/loss data used is from all matches played between October 16, 2023 and A
 The raw data was then cleaned and analyzed using statistical programming language R [@r] and the `tidyverse` [@tidyverse], `janitor` [@janitor], `arrow` [@arrow], `stanarm` [@rstanarm], `knitr` [@knitr], `modelsummary` [@modelsummary], `marginaleffects` [@marginaleffects], and `here` [@here] libraries.
 
 The final dataset consists of 445 players with a cumulative 9855 maps played across 22 tournaments. For each player, the dataset contains the number of tournament maps won and lost. A map is won if their team wins 13 of the first 24 rounds or if they win 4 out of 6 rounds in overtime.
-The dataset also contains the number of kills, deaths, headshot percentage, ADR, and the total number of rounds played. These statistics are measured over 
-the player's professional career. Headshot percentage is measured as the proportion of kills where the killing blow is a headshot and ADR is measured as the total damage done to
+The dataset also contains the number of kills, deaths, HS % (headshot percentage), ADR, and the total number of rounds played. These statistics are measured over 
+the player's professional career. HS % is measured as the proportion of kills where the killing blow is a headshot and ADR is measured as the total damage done to
 enemies divided by the number of rounds played.
 
 @fig-maps shows the distribution of the number of tournament maps played while @fig-maps-wl-1 and @fig-maps-wl-2 show the distributions of the number of wins and losses respectively.
@@ -182,36 +182,45 @@ data |>
 ```
 
 # Model
-
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
-
 ## Model set-up
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
-
+The regression model used was:
 \begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
+y_i|\pi_i, &\sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) &= \beta_0 + \beta_1 \times \mbox{K/D}_i + \beta_2 \times \mbox{ADR}_i + \beta_3 \times \mbox{HS \%}_i + \beta_4 \times \mbox{Rounds played}_i\\
+\beta_0 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_1 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_2 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_3 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_4 &\sim \mbox{Normal}(0, 2.5)
 \end{align}
 
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
-
+where $y_i$ is 1 if player $i$ will win a map and 0 if they will lose.
+$\mbox{K/D}_i$ is the kill/death ratio of the player, $\mbox{ADR}_i$ is the 
+player's ADR, $\mbox{HS \%}$ is the player's headshot percentage, and $\mbox{Rounds played}_i$ is the total number of rounds played by player $i$.
 
 ### Model justification
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
+The outcome of any map played is binary, so a logistic regression model was chosen. 
 
-We can use maths by including latex between dollar signs, for instance $\theta$.
+The outcome of each round can often be decided by the outcome of 1v1 duels. Thus, the outcome of a map can be decided by many 1v1 duels.
+K/D is the number of enemies killed on average per death, indicating the ability for a player to win fights. Since
+rounds can be won by killing all enemies, we expect K/D to be positively correlated with win rates. 
 
+Doing damage to enemies can result in kills by the player or make it easier for their teammates to kill the enemies. 
+Doing more damage in a round is clearly beneficial for winning the round and thus the map, so we expect ADR to be positively correlated with 
+win rates.
+
+HS % is a metric of the player's mechanical skill, which should be part of determining their ability to win fights.
+Then similar to K/D, we should also expect HS % to be positively correlated with win rates.
+
+Finally, the number of rounds played can be used to determine the experience of a player, with more experienced players having played more rounds.
+We expect more experienced players to be better, so it should be positively correlated with win rates.
 
 # Results
+```{r}
 
+```
 ```{r}
 #| label: tbl-model
 #| tbl-cap: Whether a respondent is likely to vote for Biden based on their race and education
@@ -224,23 +233,6 @@ modelsummary(
   )
 ```
 
-
-```{r}
-#| label: fig-vote-education
-#| fig-cap: aaa
-#| echo: false
-
-  ggplot(data, aes(x = rounds, y = win_percent)) +
-  ylim(0, 1) +
-  geom_jitter(width = 0.00, height = 0.00, alpha = 1) +
-  labs(
-    x = "Kill/Death ratio",
-    y = "Estimated tournament win rate"
-  ) +
-  theme_classic() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom")
-```
 
 # Discussion
 
@@ -261,18 +253,6 @@ Weaknesses and next steps should also be included.
 \appendix
 
 # Appendix {-}
-
-
-# Additional data details
-
-# Model details {#sec-model-details}
-
-## Posterior predictive check
-
-
-## Diagnostics
-
-
 
 # References
 
