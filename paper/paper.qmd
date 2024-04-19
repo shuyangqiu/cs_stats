@@ -48,7 +48,7 @@ there is relatively little research and the models are of lower quality.
 Professional *CS* teams compete in tournaments where teams play each other, where the number of maps won determine the winner of the matchup.
 In this paper, we created a model predict the estimand, map win rate, using various individual statistics such as K/D (kill/death ratio), ADR (average damage per round), and the total number of rounds played.
 
-We found that some metrics such as individual kill/death ratios have a significant positive correlation with win rates while other metrics such as the total number of rounds played has no correlation with win rate.
+We found that some metrics such as K/D have a positive correlation with win rates while other metrics such ADR have negative correlations with win rate.
 
 The data section (@sec-data) explains how the source of the data, how it was collected, how it was cleaned and analyzed, and visualizations of the data. 
 The model section (@sec-model) explains the model used to fit the dataset.
@@ -64,8 +64,8 @@ The win/loss data used is from all matches played between October 16, 2023 and A
 The raw data was then cleaned and analyzed using statistical programming language R [@r] and the `tidyverse` [@tidyverse], `janitor` [@janitor], `arrow` [@arrow], `stanarm` [@rstanarm], `knitr` [@knitr], `modelsummary` [@modelsummary], `marginaleffects` [@marginaleffects], and `here` [@here] libraries.
 
 The final dataset consists of 445 players with a cumulative 9855 maps played across 22 tournaments. For each player, the dataset contains the number of tournament maps won and lost. A map is won if their team wins 13 of the first 24 rounds or if they win 4 out of 6 rounds in overtime.
-The dataset also contains the number of kills, deaths, HS % (headshot percentage), ADR, and the total number of rounds played. These statistics are measured over 
-the player's professional career. HS % is measured as the proportion of kills where the killing blow is a headshot and ADR is measured as the total damage done to
+The dataset also contains the number of kills, deaths, HS% (headshot percentage), ADR, and the total number of rounds played. These statistics are measured over 
+the player's professional career. HS% is measured as the proportion of kills where the killing blow is a headshot and ADR is measured as the total damage done to
 enemies divided by the number of rounds played.
 
 @fig-maps shows the distribution of the number of tournament maps played while @fig-maps-wl-1 and @fig-maps-wl-2 show the distributions of the number of wins and losses respectively.
@@ -211,28 +211,80 @@ Doing damage to enemies can result in kills by the player or make it easier for 
 Doing more damage in a round is clearly beneficial for winning the round and thus the map, so we expect ADR to be positively correlated with 
 win rates.
 
-HS % is a metric of the player's mechanical skill, which should be part of determining their ability to win fights.
-Then similar to K/D, we should also expect HS % to be positively correlated with win rates.
+HS% is a metric of the player's mechanical skill, which should be part of determining their ability to win fights.
+Then similar to K/D, we should also expect HS% to be positively correlated with win rates.
 
-Finally, the number of rounds played can be used to determine the experience of a player, with more experienced players having played more rounds.
-We expect more experienced players to be better, so it should be positively correlated with win rates.
+The number of rounds played can be used to determine the experience of a player, with more experienced players having played more rounds.
+Additionally, better players should play in the professional scene more, so they should have more rounds played in total.
+Given these factors, we expect the number of rounds played to be positively correlated with win rates.
 
 # Results
-```{r}
+@fig-kdr-wr shows the relationship between K/D and map win rates with a line provided by the linear regression model.
+The overall relationships in this figure and following figures are difficult to see using only data points due to the number and distribution.
+However, the regression line suggests there is a positive correlation between K/D and win rate, as expected when constructing the model.
 
+```{r}
+#| label: fig-kdr-wr
+#| fig-cap: Win rate by kill/death ratio with regression line
+#| echo: false
+plot_predictions(winrates, condition = "kill_death_ratio") +
+  geom_point(data = data, aes(x = kill_death_ratio, y = win_percent), alpha = 0.5) +
+  labs(x = "Kill/Death Ratio", y = "Win Rate") +
+  theme_classic()
 ```
+
+@fig-hs-wr shows the relationship between HS% and map win rates with a line provided by the linear regression model.
+The regression line suggests there is a positive correlation between HS% and win rate, as expected when constructing the model.
+```{r}
+#| label: fig-hs-wr
+#| fig-cap: Win rate by headshot percentage with regression line
+#| echo: false
+plot_predictions(winrates, condition = "hs") +
+  geom_point(data = data, aes(x = hs, y = win_percent), alpha = 0.5) +
+  labs(x = "Headshot Percentage", y = "Win Rate") +
+  theme_classic()
+```
+@fig-adr-wr shows the relationship between ADR and map win rates with a line provided by the linear regression model.
+Interestingly, the regression line suggests there is a negative correlation between ADR and win rate.
+This appears to be counterintuitive since more damage is generally good. An explanation for this could be 
+overaggressive players deal more damage but leave their teams in a worse position, leading to lower win rates. 
+Another explanation could be "baiting", where a player waits for their team members to distract enemies in order to have easier kills,
+allowing them to stay alive, inflating their personal stats but reducing the chance for their team to win.
+```{r}
+#| label: fig-adr-wr
+#| fig-cap: Win rate by ADR with regression line
+#| echo: false
+plot_predictions(winrates, condition = "adr") +
+  geom_point(data = data, aes(x = adr, y = win_percent), alpha = 0.5) +
+  labs(x = "Average Damage per Round", y = "Win Rate") +
+  theme_classic()
+```
+@fig-rounds-wr shows the relationship between total number of rounds played and map win rates with a line provided by the linear regression model.
+The regression line suggests there is a positive relationship between total rounds played and win rate, as expected when constructing the model.
+```{r}
+#| label: fig-rounds-wr
+#| fig-cap: Win rate by total rounds played with regression line
+#| echo: false
+plot_predictions(winrates, condition = "rounds") +
+  geom_point(data = data, aes(x = rounds, y = win_percent), alpha = 0.5) +
+  labs(x = "Rounds Played", y = "Win Rate") +
+  theme_classic()
+```
+@tbl-model shows the model coefficients. Note this is not standardized, so the coefficient for K/D is large since a $\pm$ 0.1 change in K/D is a large difference whereas the coefficient for number of rounds is tiny since a change of $\pm$ 1 round played is practically nothing.
+
+@fig-model-confidence shows the confidence intervals for the model predictors.
 ```{r}
 #| label: tbl-model
-#| tbl-cap: Whether a respondent is likely to vote for Biden based on their race and education
+#| tbl-cap: Player win rate based on K/D, HS%, ADR, and rounds played
 #| echo: false
 #| warning: false
 
 modelsummary(
-  list("Tournament Win Rate" = winrates),
+  list("Tournament Map Win Rate" = winrates),
   statistic = "mad",
+  fmt = 6
   )
 ```
-
 
 # Discussion
 
@@ -253,7 +305,14 @@ Weaknesses and next steps should also be included.
 \appendix
 
 # Appendix {-}
+```{r}
+#| label: fig-model-confidence
+#| fig-cap: Confidence intervals for predictors win rate
+#| echo: false
 
+modelplot(winrates, conf_level = 0.95) +
+  labs(x = "95 percent confidence interval")
+```
 # References
 
 
