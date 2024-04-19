@@ -147,7 +147,7 @@ data |>
 @fig-adr shows the distribution of ADR. Each player has 100 health
 and on average, less than 5 enemies will be killed each round, so we expect the ADR to be less than 100. 
 
-[^1]: An AWP is a powerful but expensive sniper rifle, capable of killing in one shot to the chest
+
 ```{r}
 #| label: fig-adr
 #| fig-cap: Distribution of ADR
@@ -160,6 +160,7 @@ data |>
 ```
 
 @fig-hs shows the distribution of headshot percentages. A professional *CS* team typically has 4 riflers and 1 AWPer[^1], where riflers aim for the head to do more damage while AWPers are more likely to aim for the chest since it is a larger area and they will kill in a single shot regardless. This could explain why the players are distributed with a left skew.
+[^1]: An AWP is a powerful but expensive sniper rifle, capable of killing in one shot to the chest
 ```{r}
 #| label: fig-hs
 #| fig-cap: Distribution of Headshot Percentage
@@ -289,12 +290,44 @@ modelsummary(
 
 # Discussion{#sec-discussion}
 
-## Impacts of an individual on team performance
+## Impacts of an individual on team performance {#sec-discussion-1}
+As seen in @sec-results, some of the predictors we chose, K/D, HS%, and total rounds played, are positively correlated with win rate
+whereas ADR is unexpectedly negatively correlated with win rate. In a game where killing all members of the enemy team is a win condition,
+it is clear that individual metrics such as K/D are an important part of a team's overall performance.
+However, it is also obvious that a team's performance can not purely be explained by an individual's stats. 
 
+*CS* is a team game, every individual has 4 teammates they must work with to win. But even considering every numerical stat for all team members is not
+sufficient to fully determine a team's success. Similar to physical sports, there are too many other factors to build a perfect model based only on hard numbers.
+Every round of *CS* has many tactical decisions that must be made. Poor strategies and bad shotcalling can ruin a team's chances at winning while
+good decision making and communication can make a player invaluable to a team.
+
+For example, Finn "karrigan" Andersen currently plays on FaZe, a top ranking team having just won a large tournament, IEM Chengdu 2024.
+On paper, karrigan is worse than the rest of his team and many of his competitors with a 0.89 K/D and 43.8% HS%, but he is the
+IGL (in game leader) for FaZe. As IGL, he provides strategies and makes decisions for the rest of his team, allowing them to more effective.
+Many other top *CS* teams also have IGLs, who will typically be older and have more experience, but have worse stats. 
+
+In summary, individual player stats can be a helpful way to predict their impact on a team's performance, but it never tells the full story.
+This is applicable to *CS* as well as physical sports and other esports.
 
 ## Weaknesses and next steps
 
-Weaknesses and next steps should also be included.
+As stated in @sec-discussion-1, *CS* is a team game and the current model attempts to predict a team's win rate based only on individual's stats.
+This limits the predictive power of the model and a next step would be to include the remaining teammate's statistics in the model. 
+This would allow us to predict win rates based on all the members of a team and would also allow us to see how players with different stats
+interact and effect the team. 
+
+A team's win rate does not exist in a vacuum, it must play against another team. Currently, the model is not very useful as it only gives
+an overall win rate. A much more useful model would give the win rate for a match against another team. A next step would be to include
+the statistics of the enemy team's players in the model. This would allow us to see some of the interactions between teams and bring the model much closer
+to something bookmakers and professional sports bettors would use.
+
+One major flaw are the lifetime statistics. These help provide some ways to measure a player's performance but many of these may be
+outdated, but are still included. Many players have been playing for years and their past performance may
+no longer be relevant due changes to the game itself or age and declining physical abilities. The model could likely be improved by
+limiting the lifetime statistics to more recent ones. 
+
+Finally, the current model uses only 4 predictors. Many other statistics could be added such as number of opening kills (first kill of the round) and opening deaths.
+As stated in @sec-data for the explanation of @fig-hs, the HS% could be dependent on the weapons used, so weapons used could be included as an interaction variable.
 
 \newpage
 
